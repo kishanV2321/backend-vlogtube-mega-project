@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -76,8 +76,14 @@ const registerUser = asyncHandler(async (req, res) => {
     // create user object - create entry in db
     const user = await User.create({
         fullname,
-        avatar: avatar.url,
-        coverImage: coverImage?.url || "",
+        avatar: {
+            public_id: avatar.public_id,
+            url: avatar.url,
+        },
+        coverImage: {
+            public_id: coverImage?.public_id || "",
+            url: coverImage?.url || "",
+        },
         email,
         username: username.toLowerCase(),
         password,
@@ -166,8 +172,13 @@ const logoutUser = asyncHandler(async (req, res) => {
         req.user._id,
         {
             $set: {
-                refreshToken: undefined,
+                refreshToken: undefined, //remove fields from document
             },
+            /* or
+                  $unset: {
+                      refreshToken: 1
+                  }
+                  */
         },
         {
             new: true,
@@ -308,17 +319,27 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Error while uploading");
     }
 
+    // delete file on clodinary using public_id
+    const oldUser = await User.findById(req.user?._id).select("avatar");
+    const publicID = oldUser.avatar.public_id;
+
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                avatar: avatar.url, //avatar has many filed in object so we select avatar.url
+                avatar: {
+                    public_id: avatar.public_id,
+                    url: avatar.url,
+                }, //avatar has many filed in object so we select avatar.url
             },
         },
         { new: true },
     ).select("-password");
 
     // Todo: delete old coverImage
+    if (publicID && user.avatar.public_id) {
+        await deleteOnCloudinary(publicID);
+    }
 
     return res
         .status(200)
@@ -338,17 +359,27 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Error while uploading");
     }
 
+    // delete file on clodinary using public_id
+    const oldUser = await User.findById(req.user?._id).select("coverImage");
+    const publicID = oldUser.coverImage.public_id;
+
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                coverImage: coverImage.url, //avatar has many filed in object so we select avatar.url
+                coverImage: {
+                    public_id: coverImage.public_id,
+                    url: coverImage.url,
+                }, //avatar has many filed in object so we select avatar.url
             },
         },
         { new: true },
     ).select("-password");
 
     // Todo: delete old coverImage
+    if (publicID && user.coverImage.public_id) {
+        await deleteOnCloudinary(publicID);
+    }
 
     return res
         .status(200)
@@ -439,7 +470,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 });
 
 const getWatchHistory = asyncHandler(async (req, res) => {
-
+    
     const user = User.aggregate([
         {
             $match: {
@@ -464,10 +495,10 @@ const getWatchHistory = asyncHandler(async (req, res) => {
                                     $project: {
                                         username: 1,
                                         fullname: 1,
-                                        avatar: 1
-                                    }
-                                }
-                            ]
+                                        avatar: 1,
+                                    },
+                                },
+                            ],
                         },
                     },
                 ],
@@ -476,19 +507,21 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         {
             $addFields: {
                 owner: {
-                    $first: "$owner"
-                }
-            }
-        }
+                    $first: "$owner",
+                },
+            },
+        },
     ]);
 
     return res
-    .status(200)
-    .json(new ApiResponse(
-        200,
-        user[0].watchHistory,
-        "Watch history fetched successfully"
-    ))
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                user[0].watchHistory,
+                "Watch history fetched successfully",
+            ),
+        );
 });
 
 export {
@@ -502,5 +535,5 @@ export {
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
 };
