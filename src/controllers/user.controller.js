@@ -171,14 +171,14 @@ const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined, //remove fields from document
-            },
-            /* or
-                  $unset: {
-                      refreshToken: 1
-                  }
-                  */
+            // $set: {
+            //     refreshToken: undefined, //remove fields from document
+            // },
+
+            $unset: {
+                refreshToken: 1
+            }
+
         },
         {
             new: true,
@@ -267,8 +267,8 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid old password");
     }
 
-    user.password = password;
-    await user.save({ validateBeforeSave: flase });
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
 
     return res
         .status(200)
@@ -320,8 +320,8 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     }
 
     // delete file on clodinary using public_id
-    const oldUser = await User.findById(req.user?._id).select("avatar");
-    const publicID = oldUser.avatar.public_id;
+    const oldUserAvatar = await User.findById(req.user?._id).select("avatar");
+    const avatarToDelete = oldUserAvatar.avatar.public_id;
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
@@ -337,8 +337,8 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     ).select("-password");
 
     // Todo: delete old coverImage
-    if (publicID && user.avatar.public_id) {
-        await deleteOnCloudinary(publicID);
+    if (avatarToDelete && user.avatar.public_id) {
+        await deleteOnCloudinary(avatarToDelete);
     }
 
     return res
@@ -360,8 +360,8 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     }
 
     // delete file on clodinary using public_id
-    const oldUser = await User.findById(req.user?._id).select("coverImage");
-    const publicID = oldUser.coverImage.public_id;
+    const oldUserCoverImage = await User.findById(req.user?._id).select("coverImage");
+    const coverImageToDelete = oldUserCoverImage.coverImage.public_id;
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
@@ -377,8 +377,8 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     ).select("-password");
 
     // Todo: delete old coverImage
-    if (publicID && user.coverImage.public_id) {
-        await deleteOnCloudinary(publicID);
+    if (coverImageToDelete && user.coverImage.public_id) {
+        await deleteOnCloudinary(coverImageToDelete);
     }
 
     return res
@@ -388,7 +388,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
     //link jo hmm bhejegye usme user ka username hoga
-    const { username } = req.params;
+    const {username} = req.params;
 
     if (!username?.trim()) {
         throw new ApiError(400, "username is missing");
@@ -398,13 +398,13 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     const channel = await User.aggregate([
         {
             $match: {
-                username: username?.toLowerCase(),
-            },
+                username: username?.toLowerCase()
+            }
         },
         {
             //total no. of documents jha dusre user ne mare channel ko subcribe kiya hai toh unke channel mai unke subscribtion mai mera channel ki id(user) hoga
             $lookup: {
-                form: "subscriptions",
+                from: "subscriptions",
                 localField: "_id",
                 foreignField: "channel",
                 as: "subscribers",
@@ -413,7 +413,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         {
             //total no. of document jha maine jo channel subscribe kiye hai meri user id unke pass gyi hogi as a subsriber
             $lookup: {
-                form: "subscriptions",
+                from: "subscriptions",
                 localField: "_id",
                 foreignField: "subscriber",
                 as: "subscribedTo",
@@ -434,7 +434,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                     // chack for condition
                     $cond: {
                         //$in -> selects the documents where the value of a field equals
-                        if: { $in: [req.user?._id, "subscriber"] },
+                        if: { $in: [req.user?._id, "$subscribers.subscriber"] },
                         then: true,
                         else: false,
                     },
@@ -460,7 +460,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         throw new ApiError(404, "channel does not exist");
     }
 
-    console.log(channel);
+    //console.log(channel);
 
     return res
         .status(200)
@@ -470,8 +470,8 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 });
 
 const getWatchHistory = asyncHandler(async (req, res) => {
-    
-    const user = User.aggregate([
+
+    const user = await User.aggregate([
         {
             $match: {
                 _id: new mongoose.Types.ObjectId(req.user._id),
@@ -479,14 +479,14 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
-                form: "videos",
+                from: "videos",
                 localField: "watchHistory",
                 foreignField: "_id",
                 as: "watchHistory",
                 pipeline: [
                     {
                         $lookup: {
-                            form: "users",
+                            from: "users",
                             localField: "owner",
                             foreignField: "_id",
                             as: "owner",

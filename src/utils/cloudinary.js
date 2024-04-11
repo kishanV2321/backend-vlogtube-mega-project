@@ -25,22 +25,23 @@ const uploadOnCloudinary = async (localFilePath) => {
     } catch (error) {
         fs.unlinkSync(localFilePath)  //remove the locally saved temporary file as the upload operation got failed
 
-        return null
+        return error
     }
 }
 
-const deleteOnCloudinary = async (publicID) => {
+const deleteOnCloudinary = async (public_id, resource_type="image") => {
     try {
-        if(!publicID) return null
+        if(!public_id) return null
 
         await cloudinary.uploader.destroy(
-            publicID,
+            public_id,
             {
-                resource_type: 'auto'
+                resource_type: `${resource_type}`
             }
         )
 
     } catch (error) {
+        console.log("delete on cloudinary failed", error);
         return error
     }
 }
