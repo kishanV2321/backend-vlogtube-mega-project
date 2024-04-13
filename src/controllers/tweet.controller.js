@@ -86,7 +86,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
     }
 
     if(req.user?._id.toString() !== tweet.owner.toString()){
-        throw new ApiError(404, "only owner can delete thier tweet")
+        throw new ApiError(404, "only owner can delete their tweet")
     }
 
     const deleteTweet = await Tweet.findByIdAndDelete(tweetId)
