@@ -1,12 +1,13 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import morgan from "morgan"
 
 const app = express();
 
 //app.use -> used for confiquration and middlewares 
 app.use(cors( {
-    origin: process.env.CORS_ORIGIN,
+    origin: 'http://localhost:5173',
     credentials: true
 }
 ))
@@ -32,10 +33,10 @@ import dashboardRouter from "./routes/dashboard.routes.js"
 //routes declaration
 app.use("/api/v1/healthcheck", healthcheckRouter)
 app.use("/api/v1/users", userRouter)
-app.use("/api/v1/tweets", tweetRouter)
+app.use("/api/v1/tweet", tweetRouter)
 app.use("/api/v1/subscriptions", subscriptionRouter)
-app.use("/api/v1/videos", videoRouter)
-app.use("/api/v1/comments", commentRouter)
+app.use("/api/v1/video", videoRouter)
+app.use("/api/v1/comment", commentRouter)
 app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/playlist", playlistRouter)
 app.use("/api/v1/dashboard", dashboardRouter)

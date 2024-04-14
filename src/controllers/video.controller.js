@@ -77,10 +77,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
     //TODO: get all videos based on query, sort, pagination
-    if(!isValidObjectId(userId)){
-        throw new ApiError(400, "Invalid userID")
-    }
-
     const pipeline = []
 
     // for using Full Text based search u need to create a search index in mongoDB atlas
@@ -106,6 +102,10 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     //Step-2 for filtering
     if(userId){
+        if(!isValidObjectId(userId)){
+            throw new ApiError(400, "Invalid userID")
+        }
+        
         pipeline.push(
             {
                 $match: {
