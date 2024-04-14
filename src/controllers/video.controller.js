@@ -435,7 +435,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
     //delete likes
     await Like.deleteMany(
         {
-            video: videoId
+            video: videoId,
+            likeBy: req.user?._id
         }
     )
 

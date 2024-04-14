@@ -1,5 +1,6 @@
 import mongoose, { isValidObjectId } from "mongoose"
 import {Tweet} from "../models/tweet.model.js"
+import { Like } from "../models/like.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
@@ -90,6 +91,11 @@ const deleteTweet = asyncHandler(async (req, res) => {
     }
 
     const deleteTweet = await Tweet.findByIdAndDelete(tweetId)
+
+    await Like.deleteMany({
+        tweet: tweetId,
+        likeBy: req.user?._id
+    })
 
     if(!deleteTweet){
         throw new ApiError(500, "failed to delete tweet please try again")
