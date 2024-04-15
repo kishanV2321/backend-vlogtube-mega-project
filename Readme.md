@@ -11,6 +11,7 @@ Project uses all standard practices like JWT, bcrypt, access tokens, refresh Tok
 ## Important links
 
 - [Model link](https://app.eraser.io/workspace/YtPqZ1VogxGy1jzIDkzj?origin=share)
+- [Postman Api Documentation](https://documenter.getpostman.com/view/34034032/2sA3Bj9Zet)
 
 ## Features
 
