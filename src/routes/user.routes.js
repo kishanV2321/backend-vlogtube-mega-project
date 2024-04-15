@@ -6,7 +6,7 @@ import {
     refreshAccessToken,
     changeCurrentPassword,
     getCurrentUser,
-    updateAccountDetails,
+    updateUserDetails,
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
@@ -30,18 +30,18 @@ router.route("/register").post(
     ]),
     registerUser)
 
-router.route("/login").post(loginUser)
+router.route("/login").post(upload.none(), loginUser)
 
 
 //secure routes
 router.route("/logout").post(verifyJWT, logoutUser)
 router.route("/refresh-token").post(refreshAccessToken)
-router.route("/change-password").post(verifyJWT, changeCurrentPassword)
 router.route("/current-user").get(verifyJWT, getCurrentUser)
-router.route("/update-account").patch(verifyJWT, updateAccountDetails)
 
-router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
-router.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage)
+router.route("/change-password").post(upload.none(), verifyJWT, changeCurrentPassword)
+router.route("/update-user").patch(upload.none(), verifyJWT, updateUserDetails)
+router.route("/update-avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
+router.route("/update-coverImg").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage)
 
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
 router.route("/watch-history").get(verifyJWT, getWatchHistory)

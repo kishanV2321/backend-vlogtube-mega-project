@@ -107,7 +107,7 @@ const getChannelVideos = asyncHandler(async (req, res) => {
             },
             {
                 $addFields: {
-                    totalLikes: {
+                    likesCount: {
                         $size: "$likes"
                     },
 
@@ -137,7 +137,8 @@ const getChannelVideos = asyncHandler(async (req, res) => {
                         day: 1,
                         month: 1,
                         year: 1
-                    }
+                    },
+                    likesCount: 1
                 }
             }
         ]

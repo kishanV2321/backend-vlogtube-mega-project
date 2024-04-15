@@ -250,14 +250,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
-    const { oldPassword, newPassword, confPassword } = req.body;
+    const { oldPassword, newPassword } = req.body;
 
-    if (!(newPassword === confPassword)) {
-        throw new ApiError(
-            404,
-            "Your new password and confirm password are not same",
-        );
-    }
+    // if (!(newPassword === confPassword)) {
+    //     throw new ApiError(
+    //         404,
+    //         "Your new password and confirm password are not same",
+    //     );
+    // }
 
     const user = await User.findById(req.user._id);
 
@@ -281,15 +281,15 @@ const getCurrentUser = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, req.user, "current user fetched succesfully"));
 });
 
-const updateAccountDetails = asyncHandler(async (req, res) => {
+const updateUserDetails = asyncHandler(async (req, res) => {
     const { fullname, email } = req.body;
 
-    if (!(fullname || email)) {
+    if (!fullname || !email) {
         throw new ApiError(400, "All field are required");
     }
 
     const user = await User.findByIdAndUpdate(
-        req.user._id,
+        req.user?._id,
         {
             $set: {
                 fullname,
@@ -299,7 +299,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         {
             new: true,
         },
-    ).select("-password");
+    ).select("-password -refreshToken");
 
     return res
         .status(200)
@@ -460,7 +460,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         throw new ApiError(404, "channel does not exist");
     }
 
-    //console.log(channel);
+    // console.log(channel);
 
     return res
         .status(200)
@@ -531,7 +531,7 @@ export {
     refreshAccessToken,
     changeCurrentPassword,
     getCurrentUser,
-    updateAccountDetails,
+    updateUserDetails,
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,

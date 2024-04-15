@@ -45,9 +45,9 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 // controller to return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     const { channelId } = req.params;
-    console.log(channelId);
+    // console.log(channelId);
 
-    if (!channelId) {
+    if (!isValidObjectId(channelId)) {
         throw new ApiError(400, "Invalid channelId");
     }
 
@@ -70,7 +70,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
                             //woh subscriber jinhe maine subscribe kr rkha hai
                             //smj nhi aaya 
                             $lookup: {
-                                from: "subcriptions", //my subscription model
+                                from: "subscriptions", //my subscription model
                                 localField: "_id", //user._id
                                 foreignField: "channel", //maine jo channel subscribe kiye hai
                                 as: "subscribedToSubscriber",
@@ -81,7 +81,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
                                 subscribedToSubscriber: {
                                     $cond: {
                                         if: {
-                                            $in: [channelId, "$subscribedToSubscriber.channel"]
+                                            $in: [channelId, "$subscribedToSubscriber.subscriber"]
                                         },
                                         then: true,
                                         else: false
@@ -115,6 +115,8 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
             },
         ]
     )
+
+    // console.log(subscribers)
 
     return res
         .status(200)

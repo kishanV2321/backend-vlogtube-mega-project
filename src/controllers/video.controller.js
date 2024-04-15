@@ -86,10 +86,20 @@ const getAllVideos = asyncHandler(async (req, res) => {
     // here the name of search index is 'search-videos'
 
     //Step-1 for filtering
+    //fetch videos if isPublished = true
+    pipeline.push(
+        {
+            $match: {
+                isPublished: true
+            }
+        }
+    )
+
+    //Step-2 for filtering
     if(query){
         pipeline.push(
             {
-                $match: {
+                $search: {
                     index: "search-videos",  //search index in video mongodb database
                     text: {
                         query: query,
@@ -99,8 +109,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
             }
         )
     }
+    
 
-    //Step-2 for filtering
+    //Step-3 for filtering
     if(userId){
         if(!isValidObjectId(userId)){
             throw new ApiError(400, "Invalid userID")
@@ -114,34 +125,24 @@ const getAllVideos = asyncHandler(async (req, res) => {
             }
         )
     }
-
-    //Step-3 for filtering
-    //fetch videos if isPublished = true
-    pipeline.push(
-        {
-            $match: {
-                isPublished: true
-            }
-        }
-    )
+    
 
     //sortBy can be views, createdAt, duration
     //sortType can be ascending(1) or descending(-1)
     //Step-4 for sorting(filter krke jo bhi aaya hai usse sort krna hai)
-    if(sortBy && sortType){
-        pipeline.push(
-            {
-                $sort: {
-                    [sortBy]: sortType === "asc"? 1 : -1
-                }
+    if (sortBy && sortType) {
+        pipeline.push({
+            $sort: {
+                [sortBy]: sortType === "asc" ? 1 : -1
             }
-        )
+        });
     } else {
         pipeline.push(
-            {
+            { 
+                
                 $sort: {
-                    createdAt: -1
-                }
+                    createdAt: -1 
+                } 
             }
         )
     }
@@ -170,7 +171,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
         }
     )
 
-    const videoAggregate = await Video.aggregate(pipeline)
+    const videoAggregate = Video.aggregate(pipeline)
 
     const options = {
         page: parseInt(page, 10),
@@ -182,6 +183,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
     if(!video){
         throw new ApiError(500, "failed to fetched videos")
     }
+
+    // console.log(video)
 
     return res
     .status(200)
@@ -234,7 +237,7 @@ const getVideoById = asyncHandler(async (req, res) => {
                     {
                         $addFields: {
                             //total subscriber of owner channel(user)
-                            subscriberCount: {
+                            subscribersCount: {
                                 $size: "$subscribers"
                             },
 
@@ -255,7 +258,7 @@ const getVideoById = asyncHandler(async (req, res) => {
                         $project: {
                             username: 1,
                             "avatar.url" : 1,
-                            subscriberCount: 1,
+                            subscribersCount: 1,
                             isSubscribed: 1
                         }
                     }
@@ -265,7 +268,7 @@ const getVideoById = asyncHandler(async (req, res) => {
         {
             $addFields: {
                 //total no. of likes
-                likeCount: {
+                likesCount: {
                     $size: "$likes"
                 },
 
@@ -278,7 +281,7 @@ const getVideoById = asyncHandler(async (req, res) => {
                 isLiked: {
                     $cond: {
                         if: {
-                            $in: [req.user?._id, "$likes.likeby"]
+                            $in: [req.user?._id, "$likes.likedBy"]
                         },
                         then: true,
                         else: false
@@ -295,12 +298,14 @@ const getVideoById = asyncHandler(async (req, res) => {
                 duration: 1,
                 createdAt: 1,
                 owner: 1,
-                likeCount: 1,
+                likesCount: 1,
                 isLiked: 1,
                 comments: 1
             }
         }
     ])
+
+    // console.log(video)
 
     if(!video){
         throw new ApiError(500, "failed to fetched video")
@@ -308,7 +313,7 @@ const getVideoById = asyncHandler(async (req, res) => {
 
     //increment views if video fetched succesfully
     await Video.findByIdAndUpdate(
-        video._id,
+        videoId,
         {
             $inc: {
                 views: 1
@@ -465,7 +470,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
         throw new ApiError(404, "no video found")
     }
 
-    if(req.user?._id.toString() !== video.owner.toString()){
+    if(req.user?._id.toString() !== video?.owner.toString()){
         throw new ApiError(404, "You can't toogle publish status as you are not the owner")
     }
 
@@ -474,7 +479,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     // const toggledVideoPublish = await video.save();
 
     const toggledVideoPublish = await Video.findByIdAndUpdate(
-        video._id,
+        videoId,
         {
             $set: {
                 isPublished: !video?.isPublished
@@ -484,6 +489,8 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
             new: true
         }
     )
+
+    console.log(togglePublishStatus)
 
 
     if (!toggledVideoPublish) {

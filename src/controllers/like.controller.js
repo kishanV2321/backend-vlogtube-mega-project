@@ -16,7 +16,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         likedBy: req.user?._id
     })
 
-    console.log(isLiked)
+    //console.log(isLiked)
 
     if (isLiked) {
         await Like.findByIdAndDelete(isLiked?._id)
@@ -35,7 +35,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200, { isLiked: true }, "like video"))
+        .json(new ApiResponse(200, { isLiked: true }, "liked video"))
 
 })
 
@@ -162,7 +162,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                         //video model left join user model pe jaa kr details
                         ownerDetails: {
                             username: 1,
-                            fullName: 1,
+                            fullname: 1,
                             "avatar.url": 1,
                         }
                     }

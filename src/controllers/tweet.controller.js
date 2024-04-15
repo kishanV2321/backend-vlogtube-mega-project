@@ -48,9 +48,13 @@ const updateTweet = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Tweet not found");
     }
 
-    if(req.user?._id.toString() !== tweet.owner.toString()){
+    console.log(tweet.owner)
+    console.log(req.user?._id)
+
+    if(req.user?._id.toString() !== tweet?.owner.toString()){
         throw new ApiError(404, "You can't edit this tweet as you are not the owner")
     }
+
 
     const newTweet = await Tweet.findByIdAndUpdate(
         tweetId,
@@ -86,7 +90,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Tweet not found");
     }
 
-    if(req.user?._id.toString() !== tweet.owner.toString()){
+    if(req.user?._id.toString() !== tweet?.owner.toString()){
         throw new ApiError(404, "only owner can delete their tweet")
     }
 
@@ -154,14 +158,14 @@ const getUserTweets = asyncHandler(async (req, res) => {
                     isLiked: {
                         $cond: {
                             if: {
-                                $in: [req.user?._id, "$likes.likeBy"]
+                                $in: [req.user?._id, "$likes.likedBy"]
                             },
                             then: true,
                             else: false
                         }
                     },
 
-                    owner: {
+                    ownerDetails: {
                         $first: "$ownerDetails"
                     }
                 }
@@ -174,7 +178,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
             {
                 $project: {
                     content: 1,
-                    owner: 1,
+                    ownerDetails: 1,
                     likesCount: 1,
                     isLiked: 1,
                     createdAt: 1
