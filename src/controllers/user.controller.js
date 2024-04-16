@@ -136,7 +136,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     // access and refresh token
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-        user._id,
+        user._id
     );
 
     // send cookie
@@ -147,6 +147,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const options = {
         httpOnly: true,
         secure: true,
+        sameSite: "None"
     };
 
     return res
@@ -158,8 +159,8 @@ const loginUser = asyncHandler(async (req, res) => {
                 201,
                 {
                     user: loggedInUser,
-                    refreshToken,
                     accessToken,
+                    refreshToken,
                 },
                 "User Logged In Succesfully",
             ),
@@ -202,7 +203,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken =
-        req.cookies.refreshToken || req.body.refreshToken;
+        req.cookies?.refreshToken || req.body.refreshToken;
 
     if (!incomingRefreshToken) {
         throw new ApiError(401, "unauhtorized request");
