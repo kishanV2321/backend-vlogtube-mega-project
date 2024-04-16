@@ -170,7 +170,7 @@ const loginUser = asyncHandler(async (req, res) => {
 const logoutUser = asyncHandler(async (req, res) => {
     //find user by middleware
     await User.findByIdAndUpdate(
-        req.user._id,
+        req.user?._id,
         {
             // $set: {
             //     refreshToken: undefined, //remove fields from document
@@ -192,6 +192,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     const options = {
         httpOnly: true,
         secure: true,
+        sameSite: "None"
     };
 
     return res
