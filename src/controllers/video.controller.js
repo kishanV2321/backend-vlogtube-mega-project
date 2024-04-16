@@ -85,17 +85,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
     // this helps in seraching only in title, desc providing faster search results
     // here the name of search index is 'search-videos'
 
-    //Step-1 for filtering
-    //fetch videos if isPublished = true
-    pipeline.push(
-        {
-            $match: {
-                isPublished: true
-            }
-        }
-    )
 
-    //Step-2 for filtering
+    //Step-1 for filtering
     if(query){
         pipeline.push(
             {
@@ -103,7 +94,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
                     index: "search-videos",  //search index in video mongodb database
                     text: {
                         query: query,
-                        //path: [title, description] //search only on title, desc
+                        path: ["title", "description"] //search only on title, desc
                     }
                 }
             }
@@ -111,7 +102,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
     
 
-    //Step-3 for filtering
+    //Step-2 for filtering
     if(userId){
         if(!isValidObjectId(userId)){
             throw new ApiError(400, "Invalid userID")
@@ -129,7 +120,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     //sortBy can be views, createdAt, duration
     //sortType can be ascending(1) or descending(-1)
-    //Step-4 for sorting(filter krke jo bhi aaya hai usse sort krna hai)
+    //Step-3 for sorting(filter krke jo bhi aaya hai usse sort krna hai)
     if (sortBy && sortType) {
         pipeline.push({
             $sort: {
@@ -146,6 +137,16 @@ const getAllVideos = asyncHandler(async (req, res) => {
             }
         )
     }
+
+    //Step-4 for filtering
+    //fetch videos if isPublished = true
+    pipeline.push(
+        {
+            $match: {
+                isPublished: true
+            }
+        }
+    )
 
     //hrr video ke ownerDetails nikalne hai
     pipeline.push(
